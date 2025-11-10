@@ -24,8 +24,13 @@ class StockPriceService:
         if not stock_data_list:
             return 0
 
+        # target_date 문자열을 date 객체로 변환
+        target_date_obj = datetime.strptime(target_date, DateFormats.KRX_DATE_FORMAT).date()
+
+        # 각 데이터에 target_date 추가
         stock_price_creates = [
-            StockPriceCreate(**stock_data) for stock_data in stock_data_list
+            StockPriceCreate(**{**stock_data, "target_date": target_date_obj})
+            for stock_data in stock_data_list
         ]
 
         saved_count = self.repository.create_batch(stock_price_creates)

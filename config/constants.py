@@ -34,3 +34,7 @@ class ErrorMessages:
 class DateFormats:
     KRX_DATE_FORMAT = "%Y%m%d"
     ISO_DATE_FORMAT = "%Y-%m-%d"
+
+
+class Timezone:
+    KST = "Asia/Seoul"
