@@ -6,7 +6,6 @@ from features.stock_price.service import StockPriceService
 
 
 def test_find_surge_and_plunge_stocks(target_date: str = None):
-    """급등/급락 종목 조회 테스트"""
     if target_date is None:
         target_date = datetime.now().strftime(DateFormats.KRX_DATE_FORMAT)
 
@@ -51,7 +50,7 @@ def test_find_surge_and_plunge_stocks(target_date: str = None):
 
 if __name__ == "__main__":
     # 오늘 날짜로 테스트
-    test_find_surge_and_plunge_stocks()
+    # test_find_surge_and_plunge_stocks()
 
     # 또는 특정 날짜로 테스트
-    # test_find_surge_and_plunge_stocks("20250108")
+    test_find_surge_and_plunge_stocks("20251110")

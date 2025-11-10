@@ -13,6 +13,7 @@ class KRXHeaders:
 class KRXParams:
     LOCALE = "ko_KR"
     BLD = "dbms/MDC/STAT/standard/MDCSTAT01501"
+    BLD_ALL_STOCK_PRICE = "dbms/MDC/STAT/standard/MDCSTAT01602"
 
     class FieldNames:
         STOCK_CODE = "ISU_SRT_CD"
@@ -22,6 +23,7 @@ class KRXParams:
 
 class DatabaseTables:
     STOCK_PRICE_HISTORY = "stock_price_history"
+    STOCK_CORRELATION = "stock_correlation"
 
 
 class ErrorMessages:
