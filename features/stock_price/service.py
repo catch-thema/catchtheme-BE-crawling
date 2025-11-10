@@ -36,11 +36,42 @@ class StockPriceService:
         saved_count = self.repository.create_batch(stock_price_creates)
         return saved_count
 
+    def get_surge_stock_codes(
+        self, threshold: float, target_date: Optional[datetime] = None
+    ) -> List[str]:
+        """
+        등락률이 +threshold% 이상인 급등 종목의 종목코드를 반환합니다.
+
+        Args:
+            threshold: 등락률 임계값 (예: 5.0은 +5% 이상)
+            target_date: 조회할 날짜 (None일 경우 전체 조회)
+
+        Returns:
+            급등 종목코드 리스트
+        """
+        return self.repository.find_surge_stock_codes(threshold, target_date)
+
+    def get_plunge_stock_codes(
+        self, threshold: float, target_date: Optional[datetime] = None
+    ) -> List[str]:
+        """
+        등락률이 -threshold% 이하인 급락 종목의 종목코드를 반환합니다.
+
+        Args:
+            threshold: 등락률 임계값 (예: 5.0은 -5% 이하)
+            target_date: 조회할 날짜 (None일 경우 전체 조회)
+
+        Returns:
+            급락 종목코드 리스트
+        """
+        return self.repository.find_plunge_stock_codes(threshold, target_date)
+
     def get_stock_codes_by_abs_change_rate(
         self, threshold: float, target_date: Optional[datetime] = None
     ) -> List[str]:
         """
         등락률의 절댓값이 threshold% 이상인 종목의 종목코드를 반환합니다.
+        (급등 + 급락 종목 모두 포함)
 
         Args:
             threshold: 등락률 임계값 (예: 5.0은 ±5% 이상)

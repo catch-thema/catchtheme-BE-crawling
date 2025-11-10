@@ -54,11 +54,62 @@ class StockPriceRepository:
             self.db.rollback()
             raise e
 
+    def find_surge_stock_codes(
+        self, threshold: float, target_date: Optional[datetime] = None
+    ) -> List[str]:
+        """
+        등락률이 +threshold% 이상인 급등 종목의 종목코드를 반환합니다.
+
+        Args:
+            threshold: 등락률 임계값 (예: 5.0은 +5% 이상)
+            target_date: 조회할 날짜 (None일 경우 전체 조회)
+
+        Returns:
+            급등 종목코드 리스트
+        """
+        query = self.db.query(StockPriceHistory.stock_code).filter(
+            StockPriceHistory.change_rate >= threshold
+        )
+
+        if target_date:
+            target_date_only = target_date.date()
+            query = query.filter(StockPriceHistory.target_date == target_date_only)
+
+        stocks = query.distinct().all()
+
+        return [stock[0] for stock in stocks]
+
+    def find_plunge_stock_codes(
+        self, threshold: float, target_date: Optional[datetime] = None
+    ) -> List[str]:
+        """
+        등락률이 -threshold% 이하인 급락 종목의 종목코드를 반환합니다.
+
+        Args:
+            threshold: 등락률 임계값 (예: 5.0은 -5% 이하)
+            target_date: 조회할 날짜 (None일 경우 전체 조회)
+
+        Returns:
+            급락 종목코드 리스트
+        """
+        query = self.db.query(StockPriceHistory.stock_code).filter(
+            StockPriceHistory.change_rate <= -threshold
+        )
+
+        if target_date:
+            target_date_only = target_date.date()
+            query = query.filter(StockPriceHistory.target_date == target_date_only)
+
+        stocks = query.distinct().all()
+
+        return [stock[0] for stock in stocks]
+
     def find_stocks_by_abs_change_rate(
         self, threshold: float, target_date: Optional[datetime] = None
     ) -> List[str]:
         """
         등락률의 절댓값이 threshold% 이상인 종목의 종목코드를 반환합니다.
+        (급등 + 급락 종목 모두 포함)
 
         Args:
             threshold: 등락률 임계값 (예: 5.0은 ±5% 이상)
@@ -67,18 +118,7 @@ class StockPriceRepository:
         Returns:
             종목코드 리스트
         """
-        query = self.db.query(StockPriceHistory.stock_code).filter(
-            or_(
-                StockPriceHistory.change_rate >= threshold,
-                StockPriceHistory.change_rate <= -threshold,
-            )
-        )
+        surge_codes = self.find_surge_stock_codes(threshold, target_date)
+        plunge_codes = self.find_plunge_stock_codes(threshold, target_date)
 
-        if target_date:
-            # datetime 객체를 date 객체로 변환하여 target_date 컬럼과 비교
-            target_date_only = target_date.date()
-            query = query.filter(StockPriceHistory.target_date == target_date_only)
-
-        stocks = query.distinct().all()
-
-        return [stock[0] for stock in stocks]
+        return surge_codes + plunge_codes

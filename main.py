@@ -25,15 +25,19 @@ def run_stock_price_crawling(target_date: str = None):
         # target_date 문자열을 datetime 객체로 변환
         target_datetime = datetime.strptime(target_date, DateFormats.KRX_DATE_FORMAT)
 
-        print(f"Fetching volatile stocks for {target_date} (abs change rate >= 5%)...")
+        # 급등/급락 종목 조회
         threshold = 5.0
-        volatile_stock_codes = service.get_stock_codes_by_abs_change_rate(
-            threshold, target_datetime
-        )
-        print(f"Found {len(volatile_stock_codes)} volatile stocks")
-        print(f"Stock codes: {volatile_stock_codes}")
+        print(f"\nFetching surge stocks for {target_date} (change rate >= +{threshold}%)...")
+        surge_stock_codes = service.get_surge_stock_codes(threshold, target_datetime)
+        print(f"Found {len(surge_stock_codes)} surge stocks")
+        print(f"Surge stock codes: {surge_stock_codes}")
 
-        return volatile_stock_codes
+        print(f"\nFetching plunge stocks for {target_date} (change rate <= -{threshold}%)...")
+        plunge_stock_codes = service.get_plunge_stock_codes(threshold, target_datetime)
+        print(f"Found {len(plunge_stock_codes)} plunge stocks")
+        print(f"Plunge stock codes: {plunge_stock_codes}")
+
+        return {"surge": surge_stock_codes, "plunge": plunge_stock_codes}
     except Exception as e:
         print(f"Error occurred: {str(e)}")
         raise
