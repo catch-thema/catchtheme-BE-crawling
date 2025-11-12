@@ -53,20 +53,22 @@ def run_stock_price_crawling(target_date: str = None):
         print(f"Plunge stock codes: {plunge_stock_codes}")
 
         # 3. 급등 종목의 상관관계 데이터 수집
+        surge_response = None
         if surge_stock_codes:
             print(f"\nFetching correlations for surge stocks...")
-            surge_corr_count = correlation_service.fetch_and_save_correlations(
+            surge_response = correlation_service.fetch_and_save_correlations(
                 surge_stock_codes, StockTrend.SURGE, target_date_obj
             )
-            print(f"Saved {surge_corr_count} surge correlation records")
+            print(f"Saved {surge_response.saved_count} surge correlation records")
 
         # 4. 급락 종목의 상관관계 데이터 수집
+        plunge_response = None
         if plunge_stock_codes:
             print(f"\nFetching correlations for plunge stocks...")
-            plunge_corr_count = correlation_service.fetch_and_save_correlations(
+            plunge_response = correlation_service.fetch_and_save_correlations(
                 plunge_stock_codes, StockTrend.PLUNGE, target_date_obj
             )
-            print(f"Saved {plunge_corr_count} plunge correlation records")
+            print(f"Saved {plunge_response.saved_count} plunge correlation records")
 
         return {"surge": surge_stock_codes, "plunge": plunge_stock_codes}
     except Exception as e:
