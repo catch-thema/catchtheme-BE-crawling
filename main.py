@@ -31,7 +31,7 @@ def run_stock_price_crawling(target_date: str = None):
         target_date_obj = target_datetime.date()
 
         # 2. 급등/급락 종목 조회
-        threshold = 9.0
+        threshold = 6.0
         print(
             f"\nFetching surge stocks for {target_date} (change rate >= +{threshold}%)..."
         )

@@ -40,14 +40,14 @@ class KRXCorrelationClient:
             return None
 
     def fetch_correlation_data(
-        self, stock_code: str, result_count: int = 200
+        self, stock_code: str, result_count: int = 20
     ) -> List[Dict]:
         """
         종목의 수익률 상관관계 데이터를 조회합니다.
 
         Args:
             stock_code: 종목 코드 (예: "005930")
-            result_count: 조회할 결과 개수 (기본값: 200)
+            result_count: 조회할 결과 개수 (기본값: 20)
 
         Returns:
             상관관계 데이터 리스트 (100일 기준)

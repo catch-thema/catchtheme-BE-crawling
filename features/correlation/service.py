@@ -21,7 +21,7 @@ class CorrelationService:
         stock_codes: List[str],
         trend_type: StockTrend,
         target_date: date,
-        result_count: int = 200,
+        result_count: int = 20,
     ) -> int:
         """
         종목들의 상관관계 데이터를 조회하고 저장합니다.
