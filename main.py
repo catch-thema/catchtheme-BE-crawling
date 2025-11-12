@@ -3,11 +3,13 @@ from datetime import datetime
 from config.database import engine, Base, SessionLocal
 from config.constants import DateFormats
 from features.stock_price.service import StockPriceService
+from features.stock_price.model import StockPriceHistory
 from features.correlation.service import CorrelationService
-from features.correlation.model import StockTrend
+from features.correlation.model import StockTrend, StockCorrelation
 
 
 def initialize_database():
+    """데이터베이스 테이블 초기화 (모든 모델을 import해야 함)"""
     Base.metadata.create_all(bind=engine)
     print("Database initialized successfully")
 
