@@ -5,7 +5,7 @@ echo "Waiting for MySQL to be ready..."
 sleep 10
 
 echo "Initializing database tables..."
-python /app/init_db_once.py
+python /app/scripts/init_db_once.py
 
 echo "Starting cron daemon..."
 cron
