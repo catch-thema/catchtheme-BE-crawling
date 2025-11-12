@@ -6,7 +6,11 @@ from sqlalchemy.orm import Session
 from .krx_correlation_client import KRXCorrelationClient
 from .model import StockTrend
 from .repository import CorrelationRepository
-from .schema import StockCorrelationCreate
+from .schema import (
+    StockCorrelationCreate,
+    CorrelationSummary,
+    CorrelationSaveResponse,
+)
 
 
 class CorrelationService:
@@ -22,19 +26,7 @@ class CorrelationService:
         trend_type: StockTrend,
         target_date: date,
         result_count: int = 20,
-    ) -> int:
-        """
-        종목들의 상관관계 데이터를 조회하고 저장합니다.
-
-        Args:
-            stock_codes: 종목 코드 리스트
-            trend_type: 급등/급락 여부
-            target_date: 조회 날짜
-            result_count: 조회할 상관관계 개수
-
-        Returns:
-            저장된 레코드 수
-        """
+    ) -> CorrelationSaveResponse:
         all_correlations = []
 
         for stock_code in stock_codes:
@@ -42,7 +34,6 @@ class CorrelationService:
                 f"  Fetching correlation data for {trend_type.value} stock: {stock_code}"
             )
 
-            # KRX에서 상관관계 데이터 조회
             correlation_data_list = self.krx_client.fetch_correlation_data(
                 stock_code, result_count
             )
@@ -51,7 +42,6 @@ class CorrelationService:
                 print(f"  No correlation data found for {stock_code}")
                 continue
 
-            # 스키마 객체로 변환
             for data in correlation_data_list:
                 correlation_create = StockCorrelationCreate(
                     base_stock_code=stock_code,
@@ -66,9 +56,46 @@ class CorrelationService:
 
             print(f"  Found {len(correlation_data_list)} correlations for {stock_code}")
 
-        # DB에 일괄 저장
-        if all_correlations:
-            saved_count = self.repository.create_batch(all_correlations)
-            return saved_count
+        if not all_correlations:
+            return CorrelationSaveResponse(
+                saved_count=0,
+                correlation_summaries=[],
+            )
 
-        return 0
+        saved_count = self.repository.create_batch(all_correlations)
+        correlation_summaries = self._extract_unique_summaries(
+            all_correlations, trend_type
+        )
+
+        # ==============================================
+        # 테스트용: 연관관계 결과가 (등락 구분, 종목명) 쌍으로 출력됨
+        # ==============================================
+        # print("\n=== Correlation Summaries for Team ===")
+        # for idx, summary in enumerate(correlation_summaries, 1):
+        #     print(
+        #         f"{idx}. trend_type: {summary.trend_type.value}, "
+        #         f"stock_name: {summary.correlated_stock_name}"
+        #     )
+        # print(f"Total: {len(correlation_summaries)} unique stocks\n")
+
+        return CorrelationSaveResponse(
+            saved_count=saved_count,
+            correlation_summaries=correlation_summaries,
+        )
+
+    def _extract_unique_summaries(
+        self,
+        correlations: List[StockCorrelationCreate],
+        trend_type: StockTrend,
+    ) -> List[CorrelationSummary]:
+        unique_stock_names = {
+            correlation.correlated_stock_name for correlation in correlations
+        }
+
+        return [
+            CorrelationSummary(
+                trend_type=trend_type,
+                correlated_stock_name=stock_name,
+            )
+            for stock_name in sorted(unique_stock_names)
+        ]

@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -18,3 +19,13 @@ class StockCorrelationBase(BaseModel):
 
 class StockCorrelationCreate(StockCorrelationBase):
     pass
+
+
+class CorrelationSummary(BaseModel):
+    trend_type: StockTrend
+    correlated_stock_name: str
+
+
+class CorrelationSaveResponse(BaseModel):
+    saved_count: int
+    correlation_summaries: List[CorrelationSummary]
