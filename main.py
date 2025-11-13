@@ -6,12 +6,27 @@ from features.stock_price.service import StockPriceService
 from features.stock_price.model import StockPriceHistory
 from features.correlation.service import CorrelationService
 from features.correlation.model import StockTrend, StockCorrelation
+from features.stock_code_mapping.service import StockCodeMappingService
+from features.stock_code_mapping.model import StockCodeMapping
 
 
 def initialize_database():
     """데이터베이스 테이블 초기화 (모든 모델을 import해야 함)"""
     Base.metadata.create_all(bind=engine)
     print("Database initialized successfully")
+
+
+def initialize_stock_code_mapping():
+    """종목 코드 매핑 테이블 초기화 (최초 실행 시에만 수행)"""
+    db = SessionLocal()
+    try:
+        mapping_service = StockCodeMappingService(db)
+        mapping_service.initialize_stock_code_mappings()
+    except Exception as e:
+        print(f"Error initializing stock code mapping: {e}")
+        raise
+    finally:
+        db.close()
 
 
 def run_stock_price_crawling(target_date: str = None):
@@ -80,4 +95,5 @@ def run_stock_price_crawling(target_date: str = None):
 
 if __name__ == "__main__":
     initialize_database()
+    initialize_stock_code_mapping()
     run_stock_price_crawling()
