@@ -37,7 +37,10 @@ class StockPriceService:
         return saved_count
 
     def get_surge_stock_codes(
-        self, threshold: float, target_date: Optional[datetime] = None
+        self,
+        threshold: float,
+        target_date: Optional[datetime] = None,
+        min_trading_value: int = 0,
     ) -> List[str]:
         """
         등락률이 +threshold% 이상인 급등 종목의 종목코드를 반환합니다.
@@ -45,14 +48,20 @@ class StockPriceService:
         Args:
             threshold: 등락률 임계값 (예: 5.0은 +5% 이상)
             target_date: 조회할 날짜 (None일 경우 전체 조회)
+            min_trading_value: 최소 거래대금 (기본값: 0)
 
         Returns:
             급등 종목코드 리스트
         """
-        return self.repository.find_surge_stock_codes(threshold, target_date)
+        return self.repository.find_surge_stock_codes(
+            threshold, target_date, min_trading_value
+        )
 
     def get_plunge_stock_codes(
-        self, threshold: float, target_date: Optional[datetime] = None
+        self,
+        threshold: float,
+        target_date: Optional[datetime] = None,
+        min_trading_value: int = 0,
     ) -> List[str]:
         """
         등락률이 -threshold% 이하인 급락 종목의 종목코드를 반환합니다.
@@ -60,11 +69,14 @@ class StockPriceService:
         Args:
             threshold: 등락률 임계값 (예: 5.0은 -5% 이하)
             target_date: 조회할 날짜 (None일 경우 전체 조회)
+            min_trading_value: 최소 거래대금 (기본값: 0)
 
         Returns:
             급락 종목코드 리스트
         """
-        return self.repository.find_plunge_stock_codes(threshold, target_date)
+        return self.repository.find_plunge_stock_codes(
+            threshold, target_date, min_trading_value
+        )
 
     def get_stock_codes_by_abs_change_rate(
         self, threshold: float, target_date: Optional[datetime] = None

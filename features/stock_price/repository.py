@@ -41,6 +41,7 @@ class StockPriceRepository:
             update_dict = {
                 "stock_name": stmt.inserted.stock_name,
                 "change_rate": stmt.inserted.change_rate,
+                "trading_value": stmt.inserted.trading_value,
                 "created_at": get_kst_now(),
             }
 
@@ -55,7 +56,10 @@ class StockPriceRepository:
             raise e
 
     def find_surge_stock_codes(
-        self, threshold: float, target_date: Optional[datetime] = None
+        self,
+        threshold: float,
+        target_date: Optional[datetime] = None,
+        min_trading_value: int = 0,
     ) -> List[str]:
         """
         등락률이 +threshold% 이상인 급등 종목의 종목코드를 반환합니다.
@@ -63,12 +67,14 @@ class StockPriceRepository:
         Args:
             threshold: 등락률 임계값 (예: 5.0은 +5% 이상)
             target_date: 조회할 날짜 (None일 경우 전체 조회)
+            min_trading_value: 최소 거래대금 (기본값: 0)
 
         Returns:
             급등 종목코드 리스트
         """
         query = self.db.query(StockPriceHistory.stock_code).filter(
-            StockPriceHistory.change_rate >= threshold
+            StockPriceHistory.change_rate >= threshold,
+            StockPriceHistory.trading_value >= min_trading_value,
         )
 
         if target_date:
@@ -80,7 +86,10 @@ class StockPriceRepository:
         return [stock[0] for stock in stocks]
 
     def find_plunge_stock_codes(
-        self, threshold: float, target_date: Optional[datetime] = None
+        self,
+        threshold: float,
+        target_date: Optional[datetime] = None,
+        min_trading_value: int = 0,
     ) -> List[str]:
         """
         등락률이 -threshold% 이하인 급락 종목의 종목코드를 반환합니다.
@@ -88,12 +97,14 @@ class StockPriceRepository:
         Args:
             threshold: 등락률 임계값 (예: 5.0은 -5% 이하)
             target_date: 조회할 날짜 (None일 경우 전체 조회)
+            min_trading_value: 최소 거래대금 (기본값: 0)
 
         Returns:
             급락 종목코드 리스트
         """
         query = self.db.query(StockPriceHistory.stock_code).filter(
-            StockPriceHistory.change_rate <= -threshold
+            StockPriceHistory.change_rate <= -threshold,
+            StockPriceHistory.trading_value >= min_trading_value,
         )
 
         if target_date:
@@ -122,3 +133,26 @@ class StockPriceRepository:
         plunge_codes = self.find_plunge_stock_codes(threshold, target_date)
 
         return surge_codes + plunge_codes
+
+    def find_stock_by_code_and_date(
+        self, stock_code: str, target_date: datetime
+    ) -> Optional[StockPriceHistory]:
+        """
+        특정 종목코드와 날짜로 주가 정보를 조회합니다.
+
+        Args:
+            stock_code: 종목코드
+            target_date: 조회할 날짜
+
+        Returns:
+            StockPriceHistory 객체 또는 None
+        """
+        target_date_only = target_date.date()
+        return (
+            self.db.query(StockPriceHistory)
+            .filter(
+                StockPriceHistory.stock_code == stock_code,
+                StockPriceHistory.target_date == target_date_only,
+            )
+            .first()
+        )

@@ -26,6 +26,16 @@ class KRXClient:
         except (ValueError, TypeError):
             return 0.0
 
+    def _clean_integer_value(self, value) -> int:
+        if value is None or value == "" or value == "-":
+            return 0
+        try:
+            if isinstance(value, str):
+                value = value.replace(",", "").strip()
+            return int(float(value))
+        except (ValueError, TypeError):
+            return 0
+
     def fetch_all_stock_prices(self, target_date: str) -> List[Dict]:
         try:
             datetime.strptime(target_date, DateFormats.KRX_DATE_FORMAT)
@@ -52,8 +62,8 @@ class KRXClient:
         data = {
             "bld": KRXParams.BLD_ALL_STOCK_PRICE,
             "locale": KRXParams.LOCALE,
-            # "mktId": "ALL",              # 전체 기준
-            "mktId": "STK",                # KOSPI 기준
+            "mktId": "ALL",              # 전체 기준
+            # "mktId": "STK",                # KOSPI 기준
             "strtDd": target_date,
             "endDd": target_date,
             "adjStkPrc_check": "Y",
@@ -80,6 +90,9 @@ class KRXClient:
                     "stock_name": str(item.get(KRXParams.FieldNames.STOCK_NAME, "")).strip(),
                     "change_rate": self._clean_decimal_value(
                         item.get(KRXParams.FieldNames.CHANGE_RATE)
+                    ),
+                    "trading_value": self._clean_integer_value(
+                        item.get(KRXParams.FieldNames.TRADING_VALUE)
                     ),
                 }
 

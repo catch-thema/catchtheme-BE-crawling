@@ -19,6 +19,7 @@ class KRXParams:
         STOCK_CODE = "ISU_SRT_CD"
         STOCK_NAME = "ISU_ABBRV"
         CHANGE_RATE = "FLUC_RT"
+        TRADING_VALUE = "ACC_TRDVAL"
 
 
 class DatabaseTables:

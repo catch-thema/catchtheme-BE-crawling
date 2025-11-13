@@ -1,10 +1,11 @@
 from typing import List
+from datetime import date
 
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import Session
 
 from config.timezone import get_kst_now
-from .model import StockCorrelation
+from .model import StockCorrelation, StockTrend
 from .schema import StockCorrelationCreate
 
 
@@ -41,3 +42,17 @@ class CorrelationRepository:
         except Exception as e:
             self.db.rollback()
             raise e
+
+    def find_by_base_stock_and_date(
+        self, base_stock_code: str, target_date: date, trend_type: StockTrend
+    ) -> List[StockCorrelation]:
+        return (
+            self.db.query(StockCorrelation)
+            .filter(
+                StockCorrelation.base_stock_code == base_stock_code,
+                StockCorrelation.target_date == target_date,
+                StockCorrelation.trend_type == trend_type,
+            )
+            .order_by(StockCorrelation.correlation_rank)
+            .all()
+        )

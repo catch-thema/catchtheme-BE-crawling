@@ -29,3 +29,24 @@ class CorrelationSummary(BaseModel):
 class CorrelationSaveResponse(BaseModel):
     saved_count: int
     correlation_summaries: List[CorrelationSummary]
+
+
+class CorrelatedStockInfo(BaseModel):
+    stock_name: str = Field(..., description="연관 종목명")
+    ticker: str = Field(..., description="연관 종목 단축코드")
+
+
+class BaseStockCorrelationResponse(BaseModel):
+    base_stock_code_name: str = Field(..., description="기준 종목명")
+    base_stock_code: str = Field(..., description="기준 종목 단축코드")
+    change_rate: str = Field(..., description="등락률")
+    trend_type: str = Field(..., description="급등/급락 여부")
+    correlated_stocks: List[CorrelatedStockInfo] = Field(
+        ..., description="연관 종목 리스트"
+    )
+
+
+class CorrelationApiResponse(BaseModel):
+    correlations: List[BaseStockCorrelationResponse] = Field(
+        ..., description="연관관계 목록"
+    )
