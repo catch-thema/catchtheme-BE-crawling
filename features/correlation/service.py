@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List
 
 from sqlalchemy.orm import Session
@@ -10,7 +10,11 @@ from .schema import (
     StockCorrelationCreate,
     CorrelationSummary,
     CorrelationSaveResponse,
+    BaseStockCorrelationResponse,
+    CorrelatedStockInfo,
 )
+from features.stock_code_mapping.service import StockCodeMappingService
+from features.stock_price.repository import StockPriceRepository
 
 
 class CorrelationService:
@@ -19,6 +23,8 @@ class CorrelationService:
         self.db = db
         self.repository = CorrelationRepository(db)
         self.krx_client = KRXCorrelationClient()
+        self.mapping_service = StockCodeMappingService(db)
+        self.stock_price_repository = StockPriceRepository(db)
 
     def fetch_and_save_correlations(
         self,
@@ -26,13 +32,28 @@ class CorrelationService:
         trend_type: StockTrend,
         target_date: date,
         result_count: int = 20,
-    ) -> CorrelationSaveResponse:
+    ) -> List[BaseStockCorrelationResponse]:
         all_correlations = []
+        response_list = []
 
         for stock_code in stock_codes:
             print(
                 f"  Fetching correlation data for {trend_type.value} stock: {stock_code}"
             )
+
+            stock_price_info = self.stock_price_repository.find_stock_by_code_and_date(
+                stock_code, datetime.combine(target_date, datetime.min.time())
+            )
+
+            if not stock_price_info:
+                print(f"  Warning: No stock price info found for {stock_code}")
+                continue
+
+            standard_code = self.mapping_service.get_standard_code_by_short(stock_code)
+
+            if not standard_code:
+                print(f"  Warning: No standard code mapping found for {stock_code}")
+                continue
 
             correlation_data_list = self.krx_client.fetch_correlation_data(
                 stock_code, result_count
@@ -42,9 +63,11 @@ class CorrelationService:
                 print(f"  No correlation data found for {stock_code}")
                 continue
 
+            correlated_stocks = []
+
             for data in correlation_data_list:
                 correlation_create = StockCorrelationCreate(
-                    base_stock_code=stock_code,
+                    base_stock_code=standard_code,
                     trend_type=trend_type,
                     correlated_stock_code=data["correlated_stock_code"],
                     correlated_stock_name=data["correlated_stock_name"],
@@ -54,48 +77,32 @@ class CorrelationService:
                 )
                 all_correlations.append(correlation_create)
 
+                corr_short_code = self.mapping_service.get_short_code_by_standard(
+                    data["correlated_stock_code"]
+                )
+
+                if corr_short_code:
+                    correlated_stocks.append(
+                        CorrelatedStockInfo(
+                            stock_name=data["correlated_stock_name"],
+                            ticker=corr_short_code,
+                        )
+                    )
+
+            response_list.append(
+                BaseStockCorrelationResponse(
+                    base_stock_code_name=stock_price_info.stock_name,
+                    base_stock_code=stock_code,
+                    change_rate=str(stock_price_info.change_rate),
+                    trend_type=trend_type.value,
+                    correlated_stocks=correlated_stocks,
+                )
+            )
+
             print(f"  Found {len(correlation_data_list)} correlations for {stock_code}")
 
-        if not all_correlations:
-            return CorrelationSaveResponse(
-                saved_count=0,
-                correlation_summaries=[],
-            )
+        if all_correlations:
+            saved_count = self.repository.create_batch(all_correlations)
+            print(f"  Saved {saved_count} correlation records to database")
 
-        saved_count = self.repository.create_batch(all_correlations)
-        correlation_summaries = self._extract_unique_summaries(
-            all_correlations, trend_type
-        )
-
-        # ==============================================
-        # 테스트용: 연관관계 결과가 (등락 구분, 종목명) 쌍으로 출력됨
-        # ==============================================
-        # print("\n=== Correlation Summaries for Team ===")
-        # for idx, summary in enumerate(correlation_summaries, 1):
-        #     print(
-        #         f"{idx}. trend_type: {summary.trend_type.value}, "
-        #         f"stock_name: {summary.correlated_stock_name}"
-        #     )
-        # print(f"Total: {len(correlation_summaries)} unique stocks\n")
-
-        return CorrelationSaveResponse(
-            saved_count=saved_count,
-            correlation_summaries=correlation_summaries,
-        )
-
-    def _extract_unique_summaries(
-        self,
-        correlations: List[StockCorrelationCreate],
-        trend_type: StockTrend,
-    ) -> List[CorrelationSummary]:
-        unique_stock_names = {
-            correlation.correlated_stock_name for correlation in correlations
-        }
-
-        return [
-            CorrelationSummary(
-                trend_type=trend_type,
-                correlated_stock_name=stock_name,
-            )
-            for stock_name in sorted(unique_stock_names)
-        ]
+        return response_list
