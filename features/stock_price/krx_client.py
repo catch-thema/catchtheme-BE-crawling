@@ -52,8 +52,8 @@ class KRXClient:
         data = {
             "bld": KRXParams.BLD_ALL_STOCK_PRICE,
             "locale": KRXParams.LOCALE,
-            # "mktId": "ALL",              # 전체 기준
-            "mktId": "STK",                # KOSPI 기준
+            "mktId": "ALL",              # 전체 기준
+            # "mktId": "STK",                # KOSPI 기준
             "strtDd": target_date,
             "endDd": target_date,
             "adjStkPrc_check": "Y",

@@ -70,8 +70,8 @@ class KRXCorrelationClient:
             "isuCd2": full_code,
             "codeNmisuCd_finder_stkisu0": stock_name,
             "param1isuCd_finder_stkisu0": "ALL",
-            # "marketGubun": "ALL",            # 전체 기준
-            "marketGubun": "STK",              # KOSPI 기준
+            "marketGubun": "ALL",            # 전체 기준
+            # "marketGubun": "STK",              # KOSPI 기준
             "rsltCnt": str(result_count),
             "csvxls_isNo": "false",
         }
